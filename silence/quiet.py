@@ -154,23 +154,32 @@ def send_notifications(topic, level, subscriber_df, client, messages, levels):
         current_message['level'] = level
         current_message['topic_level'] = current_topic_level
 
-        # Create the current message in Twilio and send it
-        message = client.messages.create(
-            from_='+442033225373',
-            body=message_body,
-            to=subscriber_phone)
 
-        # Update the details of the current message from the call to Twilio
-        current_message_extra = vars(message)['_properties']
-        current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
-        current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
-        current_message_extra['date_created'] = current_message_extra['date_created'].replace(tzinfo=None)
-        current_message_extra['date_updated'] = current_message_extra['date_updated'].replace(tzinfo=None)
-        del current_message_extra['subresource_uris']
-        current_message.update(current_message_extra)
+        try:
+            # Create the current message in Twilio and send it
+            message = client.messages.create(
+                from_='+442033225373',
+                body=message_body,
+                to=subscriber_phone)
 
-        # Append the message to the message logs
-        message_logs.append(current_message)
+            # Update the details of the current message from the call to Twilio
+            current_message_extra = vars(message)['_properties']
+            current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
+            current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
+            current_message_extra['date_created'] = current_message_extra['date_created'].replace(tzinfo=None)
+            current_message_extra['date_updated'] = current_message_extra['date_updated'].replace(tzinfo=None)
+            del current_message_extra['subresource_uris']
+            current_message.update(current_message_extra)
+
+            # Append the message to the message logs
+            message_logs.append(current_message)
+
+        # Temporary block to application crash before messages are logged
+        except TwilioRestException:
+            pass
+
+        except Exception:
+            pass
 
     return message_logs
 
